@@ -5,11 +5,13 @@ import sys
 from collections import Counter
 
 
-def read_extensions(txt_file):
-    """return tuple of extensions read from Extensions.txt file from same directory as big txt file"""
+class MyIOError(IOError):
+    def __init__(self,*args,**kwargs):
+        IOError.__init__(self, *args, **kwargs)
 
-    # FIXME we assume Extensions.txt saved in same dir as other, big .txt file
-    ext_file = os.path.join(os.path.dirname(txt_file), 'Extensions.txt')
+
+def read_extensions(ext_file):
+    """return tuple of extensions read from Extensions.txt file from same directory as big txt file"""
 
     if not os.path.exists(ext_file):
         raise IOError('cannot find extensions in %s' % ext_file)
@@ -29,7 +31,7 @@ def write_tally_csv_file(fname, exts):
     # verify output csv file does not exist yet
     csv_file = fname.replace('.txt', '_tally.csv')
     if os.path.exists(csv_file):
-        raise IOError('output CSV file %s exists already' % csv_file)
+        raise MyIOError('output CSV file %s exists already' % csv_file)
 
     # read file into raw lines list
     with open(fname) as f:
@@ -60,15 +62,25 @@ def write_tally_csv_file(fname, exts):
         text_file.write('\n' + ','.join([str(i) for i in values]) + '\n')
 
 
-def main(input_file):
+def main():
     """tally lines (and dupes) associated with specified extensions
-    - read extensions from Extensions.txt file, assumed to co-exist with input file
-    - use extensions to process input file
+    - use extensions to process the input file(s)
     - write results to csv output file; same name as input but extension changed
     """
-    extensions = read_extensions(input_file)
-    write_tally_csv_file(input_file, extensions)
+    # read extensions from Desktop that has Extensions.txt file
+    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+    ext_file = os.path.join(desktop_dir, 'Extensions.txt')
+    extensions = read_extensions(ext_file)
+
+    # iterate over files specified on command line
+    for txt_file in sys.argv[1:]:
+        try:
+            write_tally_csv_file(txt_file, extensions)
+        except MyIOError:
+            print 'did not process %s because its tally CSV file already exists' % txt_file
+        except Exception:
+            print 'could not process %s (not sure what happened)' % txt_file
 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main()
