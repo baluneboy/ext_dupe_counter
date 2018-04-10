@@ -103,3 +103,5 @@ ENV/
 # PyCharm
 .idea/
 
+# unittest
+test/okay/biglist_tally.csv
