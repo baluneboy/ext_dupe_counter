@@ -8,7 +8,7 @@ class TestTallyFunctions(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        """ get_some_resource() is slow, to avoid calling it for each test use setUpClass()
+        """ avoid calling setUp for each test, so use setUpClass()
             and store the result as class variable
         """
         super(TestTallyFunctions, cls).setUpClass()
@@ -20,6 +20,11 @@ class TestTallyFunctions(unittest.TestCase):
 
         # make sure Extensions.txt exists on user desktop
         desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+
+        # FIXME only run tests on dev machines, so we do not clobber actual user files
+        if not desktop_dir.startswith('/Users/ken'):
+            raise SystemExit
+
         cls.ext_file = os.path.join(desktop_dir, 'Extensions.txt')
         if not os.path.exists(cls.ext_file):
             copyfile('./test/okay/Extensions.txt', cls.ext_file)
@@ -53,6 +58,23 @@ class TestTallyFunctions(unittest.TestCase):
         self.assertEqual(exception.args,
                          ('output CSV file ./test/tally_file_already_exists/biglist_tally.csv '
                           'exists already',))
+
+    @classmethod
+    def tearDownClass(cls):
+        """ avoid calling tearDown for each test, so use tearDownClass()
+            and that's all folks
+        """
+        super(TestTallyFunctions, cls).tearDownClass()
+
+        # if tally csv file exists in okay subdir, then delete it
+        if os.path.exists(cls.ok_tally_file):
+            os.remove(cls.ok_tally_file)
+
+        # make sure Extensions.txt exists on user desktop
+        desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+        cls.ext_file = os.path.join(desktop_dir, 'Extensions.txt')
+        if not os.path.exists(cls.ext_file):
+            copyfile('./test/okay/Extensions.txt', cls.ext_file)
 
 
 if __name__ == '__main__':
