@@ -77,7 +77,7 @@ def main():
         try:
             write_tally_csv_file(txt_file, extensions)
         except MyIOError:
-            print 'did not process %s because its tally CSV file already exists' % txt_file
+            print 'did not process %s because its "*_tally.csv" file already exists' % txt_file
         except Exception:
             print 'could not process %s (not sure what happened)' % txt_file
 
