@@ -11,7 +11,7 @@ class MyIOError(IOError):
 
 
 def read_extensions(ext_file):
-    """return tuple of extensions read from Extensions.txt file from same directory as big txt file"""
+    """return tuple of extensions read from input file [e.g. ~/Desktop/Extensions.txt]"""
 
     if not os.path.exists(ext_file):
         raise IOError('cannot find extensions in %s' % ext_file)
