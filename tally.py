@@ -3,6 +3,17 @@
 import os
 import sys
 from collections import Counter
+import pyperclip
+
+
+# TODO no more drag-n-drop, instead start from "copy to clipboard"
+# TODO derive filename for big list
+
+
+def demo_paste():
+    pyperclip.copy('The text to be copied to the clipboard.')
+    s = pyperclip.paste()
+    print s
 
 
 class MyIOError(IOError):
