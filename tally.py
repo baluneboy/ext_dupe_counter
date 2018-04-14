@@ -3,6 +3,17 @@
 import os
 import sys
 from collections import Counter
+import pyperclip
+
+
+# TODO no more drag-n-drop, instead start from "copy to clipboard"
+# TODO derive filename for big list
+
+
+def demo_paste():
+    pyperclip.copy('The text to be copied to the clipboard.')
+    s = pyperclip.paste()
+    print s
 
 
 class MyIOError(IOError):
@@ -11,7 +22,7 @@ class MyIOError(IOError):
 
 
 def read_extensions(ext_file):
-    """return tuple of extensions read from Extensions.txt file from same directory as big txt file"""
+    """return tuple of extensions read from input file [e.g. ~/Desktop/Extensions.txt]"""
 
     if not os.path.exists(ext_file):
         raise IOError('cannot find extensions in %s' % ext_file)

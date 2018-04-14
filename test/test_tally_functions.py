@@ -22,7 +22,8 @@ class TestTallyFunctions(unittest.TestCase):
         desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
 
         # FIXME only run tests on dev machines, so we do not clobber actual user files
-        if not desktop_dir.startswith('/Users/ken'):
+        print desktop_dir
+        if not (desktop_dir.startswith('/Users/ken') or desktop_dir.startswith('C:\Users\khrovat')):
             raise SystemExit
 
         cls.ext_file = os.path.join(desktop_dir, 'Extensions.txt')
