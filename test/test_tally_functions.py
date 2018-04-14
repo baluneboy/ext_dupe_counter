@@ -61,9 +61,7 @@ class TestTallyFunctions(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        """ avoid calling tearDown for each test, so use tearDownClass()
-            and that's all folks
-        """
+        """ use this to avoid calling tearDown for each test """
         super(TestTallyFunctions, cls).tearDownClass()
 
         # if tally csv file exists in okay subdir, then delete it
