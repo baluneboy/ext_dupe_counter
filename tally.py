@@ -2,18 +2,29 @@
 
 import os
 import sys
+import fnmatch
+from glob import glob
 from collections import Counter
-import pyperclip
 
 
-# TODO no more drag-n-drop, instead start from "copy to clipboard"
-# TODO derive filename for big list
+# TODO no more drag-n-drop, instead use recursive file listing
+# TODO derive filename for run list
 
 
-def demo_paste():
-    pyperclip.copy('The text to be copied to the clipboard.')
-    s = pyperclip.paste()
-    print s
+def demo_walk(top_dir, exts):
+    """return list of filenames matching extensions via recursive directory walk"""
+    kept_filenames = []
+    for root, dirs, files in os.walk(top_dir):
+        kept_filenames += [os.path.join(root, s) for s in files if s.endswith(exts)]
+    return kept_filenames
+
+
+top_dir = '/Users/ken/Projects/PyCharm/ext_dupe_counter/test'
+exts = ('txt', 'tiff')
+keepers = demo_walk(top_dir, exts)
+for k in keepers:
+    print k
+raise SystemExit
 
 
 class MyIOError(IOError):
