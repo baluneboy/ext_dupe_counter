@@ -2,13 +2,36 @@
 
 import os
 import sys
-import fnmatch
-from glob import glob
+import hashlib
+import datetime
 from collections import Counter
 
 
 # TODO no more drag-n-drop, instead use recursive file listing
 # TODO derive filename for run list
+# TODO config file for which columns to show in run list
+
+# TODO ask Mark what columns are of interest file size, date modified, md5sum, name
+# TODO ask Mark what is a duplicate because on local machine, 2 files cannot share name
+
+
+def get_md5(fname, block_size=2**20):
+    m = hashlib.md5()
+    with open(fname, "rb") as f:
+        while True:
+            buf = f.read(block_size)
+            if not buf:
+                break
+            m.update(buf)
+    return m.hexdigest()
+
+
+def get_fsize(fname):
+    return os.stat(fname).st_size
+
+
+def get_fdate(fname):
+    return datetime.datetime.fromtimestamp(os.path.getmtime(fname))
 
 
 def demo_walk(top_dir, exts):
@@ -23,7 +46,11 @@ top_dir = '/Users/ken/Projects/PyCharm/ext_dupe_counter/test'
 exts = ('txt', 'tiff')
 keepers = demo_walk(top_dir, exts)
 for k in keepers:
-    print k
+    print get_md5(k),\
+        get_fdate(k).strftime('%Y-%m-%d %H:%M:%S'),\
+        "{:>15,}".format(get_fsize(k)),\
+        k
+
 raise SystemExit
 
 
