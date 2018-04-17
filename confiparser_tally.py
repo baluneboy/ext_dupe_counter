@@ -4,13 +4,13 @@ import os
 import ConfigParser
 
 
-COLUMNKEYS = ['size', 'date', 'md5', 'dupes']
+COLUMNS = ['md5', 'date', 'size', 'dupes']
 
 
 def get_default_config_fname():
     """return string with default config filename"""
     desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
-    return os.path.join(desktop_dir, 'tally_config.ini')
+    return os.path.join(desktop_dir, 'tally_config.txt')
 
 
 def write_config(cfg_fname=None):
@@ -31,8 +31,15 @@ def write_config(cfg_fname=None):
     # non-string values to keys internally, but will receive an error
     # when attempting to write to a file or when you get it in non-raw
     # mode. SafeConfigParser does not allow such assignments to take place.
+
+    config.add_section('RunListDestination')
+    config.set('RunListDestination', 'output_dir', 'here')
+
+    config.add_section('RunListExtensions')
+    config.set('RunListExtensions', 'extensions', 'tiff, next, ccu, mei, log, txt, metadata')
+
     config.add_section('RunListColumns')
-    for key in COLUMNKEYS:
+    for key in COLUMNS:
         config.set('RunListColumns', key,  'True')
     config.set('RunListColumns', 'dupes', 'False')
 
@@ -50,21 +57,13 @@ def read_config(cfg_fname=None):
     config = ConfigParser.SafeConfigParser()
 
     if not os.path.exists(cfg_fname):
-        print 'creating %s with defaults (it did not exist)' % cfg_fname
+        print 'creating %s because it did not exist' % cfg_fname
         write_config(cfg_fname)
 
     print 'reading %s' % cfg_fname
     config.read(cfg_fname)
 
-    columns = {}
-    for k in COLUMNKEYS:
-        columns[k] = config.getboolean('RunListColumns', k)
-
-    print columns
-
-
-def demo_read():
-    read_config()
+    return config
 
 
 def main():

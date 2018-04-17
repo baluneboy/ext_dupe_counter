@@ -5,11 +5,12 @@ import sys
 import hashlib
 import datetime
 from collections import Counter
+from confiparser_tally import COLUMNS, read_config
 
 
 # TODO no more drag-n-drop, instead use recursive file listing
-# TODO derive filename for run list
-# TODO config file for which columns to show in run list
+# TODO derive filename for run list OR just use RunList_DATETIMESTAMP.txt
+# TODO config file for which columns to show in run list & output directory
 
 # TODO ask Mark what columns are of interest file size, date modified, md5sum, name
 # TODO ask Mark what is a duplicate because on local machine, 2 files cannot share name
@@ -34,7 +35,7 @@ def get_fdate(fname):
     return datetime.datetime.fromtimestamp(os.path.getmtime(fname))
 
 
-def demo_walk(top_dir, exts):
+def get_matching_file_extensions(top_dir, exts):
     """return list of filenames matching extensions via recursive directory walk"""
     kept_filenames = []
     for root, dirs, files in os.walk(top_dir):
@@ -42,31 +43,38 @@ def demo_walk(top_dir, exts):
     return kept_filenames
 
 
-top_dir = '/Users/ken/Projects/PyCharm/ext_dupe_counter/test'
-exts = ('txt', 'tiff')
-keepers = demo_walk(top_dir, exts)
-for k in keepers:
-    print get_md5(k),\
-        get_fdate(k).strftime('%Y-%m-%d %H:%M:%S'),\
-        "{:>15,}".format(get_fsize(k)),\
-        k
-
-raise SystemExit
+def get_files_info(top_dir, exts, cols):
+    files = get_matching_file_extensions(top_dir, exts)
+    files_info = []
+    for f in files:
+        file_info = (f, )
+        if cols['md5']:
+            file_info += (get_md5(f), )
+        if cols['date']:
+            file_info += (get_fdate(f), )
+        if cols['size']:
+            file_info += (get_fsize(f), )
+        files_info += file_info
+        # print get_md5(f), \
+        #     get_fdate(f).strftime('%Y-%m-%d %H:%M:%S'), \
+        #     "{:>15,}".format(get_fsize(f)), \
+        #     f
+    return files_info
 
 
 class MyIOError(IOError):
-    def __init__(self,*args,**kwargs):
+    def __init__(self, *args, **kwargs):
         IOError.__init__(self, *args, **kwargs)
 
 
-def read_extensions(ext_file):
+def read_extensions(config_file):
     """return tuple of extensions read from input file [e.g. ~/Desktop/Extensions.txt]"""
 
-    if not os.path.exists(ext_file):
-        raise IOError('cannot find extensions in %s' % ext_file)
+    if not os.path.exists(config_file):
+        raise IOError('cannot find extensions in %s' % config_file)
 
     # FIXME fixed format of Extensions.txt file assumed, newline separated extensions
-    with open(ext_file) as fh:
+    with open(config_file) as fh:
         ext_lines = fh.read().splitlines()
 
     print '%d extensions found in Extensions.txt file' % len(ext_lines)
@@ -74,8 +82,11 @@ def read_extensions(ext_file):
     return tuple(ext_lines)
 
 
-def write_tally_csv_file(fname, exts):
+def write_tally_csv_file(files_info):
     """write csv file that shows counts of files with specified input extensions"""
+
+    print files_info
+    raise SystemExit
 
     # verify output csv file does not exist yet
     csv_file = fname.replace('.txt', '_tally.csv')
@@ -106,9 +117,9 @@ def write_tally_csv_file(fname, exts):
         values += [num_total, num_dupes]
 
     # write results to output csv file
-    with open(csv_file, "w") as text_file:
-        text_file.write(','.join(headers))
-        text_file.write('\n' + ','.join([str(i) for i in values]) + '\n')
+    with open(csv_file, "w") as tconfig_file:
+        tconfig_file.write(','.join(headers))
+        tconfig_file.write('\n' + ','.join([str(i) for i in values]) + '\n')
 
 
 def main():
@@ -116,19 +127,42 @@ def main():
     - use extensions to process the input file(s)
     - write results to csv output file; same name as input but extension changed
     """
-    # read extensions from Desktop that has Extensions.txt file
-    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
-    ext_file = os.path.join(desktop_dir, 'Extensions.txt')
-    extensions = read_extensions(ext_file)
 
-    # iterate over files specified on command line
-    for txt_file in sys.argv[1:]:
-        try:
-            write_tally_csv_file(txt_file, extensions)
-        except MyIOError:
-            print 'did not process %s because its "*_tally.csv" file already exists' % txt_file
-        except Exception:
-            print 'could not process %s (not sure what happened)' % txt_file
+    # get/verify first argument as top directory to walk
+    top_dir = sys.argv[1]
+    if not os.path.isdir(top_dir):
+        raise IOError('first and only argument "%s" is not a directory' % top_dir)
+
+    # read config_file
+    desktop_dir = os.path.join(os.path.expanduser('~'), 'Desktop')
+    config_file = os.path.join(desktop_dir, 'tally_config.txt')
+    config = read_config(cfg_fname=config_file)
+
+    # output directory
+    output_dir = config.get('RunListDestination', 'output_dir')
+    if output_dir.lower() == 'here':
+        output_dir = top_dir
+
+    # csv filename; short-circuit if _tally.csv file already exists at destination
+    csv_fname = os.path.join(output_dir, os.path.basename(output_dir) + '_tally.csv')
+    if os.path.exists(csv_fname):
+        raise MyIOError('aborted because output CSV file %s exists already' % csv_fname)
+
+    # get configuration info
+    exts = config.get('RunListExtensions', 'extensions')
+    extensions = tuple([x.lstrip().rstrip() for x in exts.split(',')])
+    print 'extensions:', extensions
+
+    columns = {}
+    for k in COLUMNS:
+        columns[k] = config.getboolean('RunListColumns', k)
+    print 'columns:', columns
+
+    # get each extension-matching files' info
+    files_info = get_files_info(top_dir, extensions, columns)
+
+    # write tally CSV file
+    write_tally_csv_file(files_info)
 
 
 if __name__ == '__main__':
